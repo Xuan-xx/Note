@@ -131,3 +131,108 @@ JVM规范定义了几种原子操作：
 
 单行赋值语句不需要加锁，但多行赋值语句也需要加锁。
 
+---
+
+## 同步方法
+
+我们知道Java程序依靠`synchronized`对线程进行同步，使用`synchronized`的时候，锁住的是哪个对象非常重要。
+
+让线程自己选择锁对象往往会使得代码逻辑混乱，也不利于封装。更好的方法是把`synchronized`逻辑封装起来。
+
+
+
+### 线程安全类
+
+- 有部分类在设计时就设计为线程安全类
+- 一些不变类，成员变量都是`final`，多线程访问时只能读不能写，也是线程安全的
+- 类似`Math`这类只提供静态方法，没有成员变量的类也是线程安全的
+
+
+
+*大部分的类都是线程不安全的，但如果只读取不写入，也是可以在线程间安全共享的*
+
+
+
+当我们锁住的是`this`实例时，实际上可以用`synchronized`修饰这个方法。下面两种写法是等价的：
+
+```
+public void add(int n) {
+    synchronized(this) { // 锁住this
+        count += n;
+    } // 解锁
+}
+public synchronized void add(int n) { // 锁住this
+    count += n;
+} // 解锁
+```
+
+因此，用`synchronized`修饰的方法就是同步方法，它表示整个方法都必须用`this`实例加锁。
+
+我们再思考一下，如果对一个静态方法添加`synchronized`修饰符，它锁住的是哪个对象？
+
+```
+public synchronized static void test(int n) {
+    ...
+}
+```
+
+对于`static`方法，是没有`this`实例的，因为`static`方法是针对类而不是实例。但是我们注意到任何一个类都有一个由JVM自动创建的`Class`实例，因此，对`static`方法添加`synchronized`，锁住的是该类的`Class`实例。上述`synchronized static`方法实际上相当于：
+
+```java
+public class Counter {
+    public static void test(int n) {
+        synchronized(Counter.class) {
+            ...
+        }
+    }
+}
+```
+
+
+
+---
+
+## 死锁
+
+- java的锁是可重入锁（能被同一个线程反复获取的锁）
+- 可能会产生死锁
+
+
+
+---
+
+## wait()和notify
+
+### wait()
+
+1. 是一个定义在`Object`类的`native`方法（由JVM的c代码实现）；
+2. 必须在`synchronized`块中才能调用（`wait()`方法调用时，会*释放*线程获得的锁，`wait()`方法返回后，线程又会重新试图获得锁）；
+
+
+
+### notify()
+
+- 唤醒一个等待线程
+- notifyAll()唤醒所有等待线程
+
+---
+
+## 使用ReentrantLock
+
+- 是一个可重入锁，可以代替synchronized，更加安全
+- 必须先获取锁，再进入try｛...｝代码块，最后在`finally`中释放锁
+- 可以使用tryLock()尝试获取锁
+
+
+
+---
+
+## 使用Condition
+
+- 实现`synchronized`中的`wait`和`notify`
+- `Condition`提供的`await()`、`signal()`、`signalAll()`原理和`synchronized`锁对象的`wait()`、`notify()`、`notifyAll()`是一致的，并且其行为也是一样的：
+  - `await()`会释放当前锁，进入等待状态；
+  - `signal()`会唤醒某个等待线程；
+  - `signalAll()`会唤醒所有等待线程；
+  - 唤醒线程从`await()`返回后需要重新获得锁。
+- 和`tryLock()`类似，`await()`可以在等待指定时间后，如果还没有被其他线程通过`signal()`或`signalAll()`唤醒，可以自己醒来
