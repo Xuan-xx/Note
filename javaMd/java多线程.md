@@ -236,3 +236,286 @@ public class Counter {
   - `signalAll()`会唤醒所有等待线程；
   - 唤醒线程从`await()`返回后需要重新获得锁。
 - 和`tryLock()`类似，`await()`可以在等待指定时间后，如果还没有被其他线程通过`signal()`或`signalAll()`唤醒，可以自己醒来
+
+---
+
+## 使用ReadWriteLock
+
+- 创建一个`ReadWriteLock`实例，然后分别获取读锁和写锁，把读写操作分别用读锁和写锁来加锁，读取时，多个线程可以同时获取读锁，这样大大提高了并发读的效率。
+- 使用条件：同一个数据，有大量线程读取，但仅有少量线程修改。
+
+```java
+public class Counter {
+    private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
+    private final Lock rlock = rwlock.readLock();
+    private final Lock wlock = rwlock.writeLock();
+    private int[] counts = new int[10];
+
+    public void inc(int index) {
+        wlock.lock(); // 加写锁
+        try {
+            counts[index] += 1;
+        } finally {
+            wlock.unlock(); // 释放写锁
+        }
+    }
+
+    public int[] get() {
+        rlock.lock(); // 加读锁
+        try {
+            return Arrays.copyOf(counts, counts.length);
+        } finally {
+            rlock.unlock(); // 释放读锁
+        }
+    }
+}
+```
+
+
+
+*潜在问题*：这是一种悲观的读锁，在读数据时，不能写入数据。必须等待读线程释放读锁后写线程才能获取写锁。
+
+---
+
+## 使用StampedLock
+
+- 解决`ReadWriteLock`悲观读的问题
+- 和`ReadWriteLock`相比，写入的加锁基本一致。
+- 读取要先通过通过`tryOptimisticRead()`获取一个乐观读锁，并返回版本号。接着进行读取，读取完成后，我们通过`validate()`去验证版本号，如果在读取过程中没有写入，版本号不变，验证成功，我们就可以放心地继续后续操作。如果在读取过程中有写入，版本号会发生变化，验证将失败。在失败的时候，我们再通过获取悲观读锁再次读取。由于写入的概率不高，程序在绝大部分情况下可以通过乐观读锁获取数据，极少数情况下使用悲观读锁获取数据。
+
+
+
+***代价***:
+
+1. 代码更复杂
+2. `StampedLock`是一个不可重入锁。
+
+
+
+```java
+public class Point {
+    private final StampedLock stampedLock = new StampedLock();
+
+    private double x;
+    private double y;
+
+    public void move(double deltaX, double deltaY) {
+        long stamp = stampedLock.writeLock(); // 获取写锁
+        try {
+            x += deltaX;
+            y += deltaY;
+        } finally {
+            stampedLock.unlockWrite(stamp); // 释放写锁
+        }
+    }
+
+    public double distanceFromOrigin() {
+        long stamp = stampedLock.tryOptimisticRead(); // 获得一个乐观读锁
+        // 注意下面两行代码不是原子操作
+        // 假设x,y = (100,200)
+        double currentX = x;
+        // 此处已读取到x=100，但x,y可能被写线程修改为(300,400)
+        double currentY = y;
+        // 此处已读取到y，如果没有写入，读取是正确的(100,200)
+        // 如果有写入，读取是错误的(100,400)
+        if (!stampedLock.validate(stamp)) { // 检查乐观读锁后是否有其他写锁发生
+            stamp = stampedLock.readLock(); // 获取一个悲观读锁
+            try {
+                currentX = x;
+                currentY = y;
+            } finally {
+                stampedLock.unlockRead(stamp); // 释放悲观读锁
+            }
+        }
+        return Math.sqrt(currentX * currentX + currentY * currentY);
+    }
+}
+```
+
+
+
+---
+
+## 使用Concurrent集合
+
+- `java.util.concurrent`包提供了对应的并发集合类
+
+| interface | non-thread-safe         | thread-safe                              |
+| :-------- | :---------------------- | :--------------------------------------- |
+| List      | ArrayList               | CopyOnWriteArrayList                     |
+| Map       | HashMap                 | ConcurrentHashMap                        |
+| Set       | HashSet / TreeSet       | CopyOnWriteArraySet                      |
+| Queue     | ArrayDeque / LinkedList | ArrayBlockingQueue / LinkedBlockingQueue |
+| Deque     | ArrayDeque / LinkedList | LinkedBlockingDeque                      |
+
+
+
+因为所有的同步和加锁的逻辑都在集合内部实现，对外部调用者来说，只需要正常按接口引用，其他代码和原来的非线程安全代码完全一样。即当我们需要多线程访问时，把：
+
+```
+Map<String, String> map = new HashMap<>();
+```
+
+改为：
+
+```java
+Map<String, String> map = new ConcurrentHashMap<>();
+```
+
+
+
+---
+
+## 使用Atomic
+
+- Java的`java.util.concurrent`包除了提供底层锁、并发集合外，还提供了一组原子操作的封装类，它们位于`java.util.concurrent.atomic`包。
+- 我们以`AtomicInteger`为例，它提供的主要操作有：
+  - 增加值并返回新值：`int addAndGet(int delta)`
+  - 加1后返回新值：`int incrementAndGet()`
+  - 获取当前值：`int get()`
+  - 用CAS方式设置：`int compareAndSet(int expect, int update)`
+
+
+
+我们利用`AtomicLong`可以编写一个多线程安全的全局唯一ID生成器：
+
+```java
+class IdGenerator {
+    AtomicLong var = new AtomicLong(0);
+
+    public long getNextId() {
+        return var.incrementAndGet();
+    }
+}
+```
+
+
+
+---
+
+## 使用线程池
+
+- `ExecutorService`接口表示线程池
+- 因为`ExecutorService`只是接口，Java标准库提供的几个常用实现类有：
+  - FixedThreadPool：线程数固定的线程池；
+  - CachedThreadPool：线程数根据任务动态调整的线程池；
+  - SingleThreadExecutor：仅单线程执行的线程池。
+- `submit()`提交任务，`shutdown()`会等待正在执行的任务完成然后关闭线程池，`shutdownNow()`会立刻停止正在执行的任务，`awaitTermination()`则会等待指定的时间让线程池关闭
+
+
+
+如果我们把线程池改为`CachedThreadPool`，由于这个线程池的实现会根据任务数量动态调整线程池的大小，所以6个任务可一次性全部同时执行。
+
+如果我们想把线程池的大小限制在4～10个之间动态调整怎么办？我们查看`Executors.newCachedThreadPool()`方法的源码：
+
+```
+public static ExecutorService newCachedThreadPool() {
+    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                    60L, TimeUnit.SECONDS,
+                                    new SynchronousQueue<Runnable>());
+}
+```
+
+因此，想创建指定动态范围的线程池，可以这么写：
+
+```
+int min = 4;
+int max = 10;
+ExecutorService es = new ThreadPoolExecutor(min, max,
+        60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+```
+
+
+
+### scheduledThreadPool
+
+- 应对需要定期反复执行的任务
+
+创建一个`ScheduledThreadPool`仍然是通过`Executors`类：
+
+```
+ScheduledExecutorService ses = Executors.newScheduledThreadPool(4);
+```
+
+我们可以提交一次性任务，它会在指定延迟后只执行一次：
+
+```
+// 1秒后执行一次性任务:
+ses.schedule(new Task("one-time"), 1, TimeUnit.SECONDS);
+```
+
+如果任务以固定的每3秒执行，我们可以这样写：
+
+```
+// 2秒后开始执行定时任务，每3秒执行:
+ses.scheduleAtFixedRate(new Task("fixed-rate"), 2, 3, TimeUnit.SECONDS);
+```
+
+如果任务以固定的3秒为间隔执行，我们可以这样写：
+
+```
+// 2秒后开始执行定时任务，以3秒为间隔执行:
+ses.scheduleWithFixedDelay(new Task("fixed-delay"), 2, 3, TimeUnit.SECONDS);
+```
+
+注意FixedRate和FixedDelay的区别。FixedRate是指任务总是以固定时间间隔触发，不管任务执行多长时间：
+
+```ascii
+│░░░░   │░░░░░░ │░░░    │░░░░░  │░░░  
+├───────┼───────┼───────┼───────┼────>
+│<─────>│<─────>│<─────>│<─────>│
+```
+
+而FixedDelay是指，上一次任务执行完毕后，等待固定的时间间隔，再执行下一次任务：
+
+```ascii
+│░░░│       │░░░░░│       │░░│       │░
+└───┼───────┼─────┼───────┼──┼───────┼──>
+    │<─────>│     │<─────>│  │<─────>│
+```
+
+因此，使用`ScheduledThreadPool`时，我们要根据需要选择执行一次、FixedRate执行还是FixedDelay执行。
+
+
+
+---
+
+## Future
+
+`Runnable`接口有个问题，它的方法没有返回值。如果任务需要一个返回结果，那么只能保存到变量，还要提供额外的方法读取，非常不便。所以，Java标准库还提供了一个`Callable`接口，和`Runnable`接口比，它多了一个返回值：
+
+```
+class Task implements Callable<String> {
+    public String call() throws Exception {
+        return longTimeCalculation(); 
+    }
+}
+```
+
+并且`Callable`接口是一个泛型接口，可以返回指定类型的结果。
+
+
+
+如果仔细看`ExecutorService.submit()`方法，可以看到，它返回了一个`Future`类型，一个`Future`类型的实例代表一个未来能获取结果的对象
+
+
+
+一个`Future<V>`接口表示一个未来可能会返回的结果，它定义的方法有：
+
+- `get()`：获取结果（可能会等待）
+- `get(long timeout, TimeUnit unit)`：获取结果，但只等待指定的时间；
+- `cancel(boolean mayInterruptIfRunning)`：取消当前任务；
+- `isDone()`：判断任务是否已完成。
+
+
+
+---
+
+## 使用ForkJoin
+
+//TODO
+
+
+
+---
+

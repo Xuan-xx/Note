@@ -82,3 +82,35 @@ OutputStream out = sock.getOutputStream();
   ```
 
 - 这个`connect()`方法不是真连接，它是为了在客户端的`DatagramSocket`实例中保存服务器端的IP和端口号，确保这个`DatagramSocket`实例只能往指定的地址和端口发送UDP包，不能往其他地址和端口发送。这么做不是UDP的限制，而是Java内置了安全检查。
+
+
+
+---
+
+## HTTP编程(HyperText Transfer Protocol)
+
+- 基于TCP协议之上的一种请求-响应协议
+- 服务器总使用`80`和`443`端口
+
+
+
+### HTTP请求格式
+
+- 由HTTP Header和HTTP Body两部分构成
+- 第一行总是`请求方法 路径 HTTP版本`，例如，`GET / HTTP/1.1`表示使用`GET`请求，路径是`/`，版本是`HTTP/1.1`。
+- 后续的每一行都是固定的`Header: Value`格式，我们称为HTTP Header，服务器依靠某些特定的Header来识别客户端请求，例如：
+  - Host：表示请求的域名，因为一台服务器上可能有多个网站，因此有必要依靠Host来识别请求是发给哪个网站的；
+  - User-Agent：表示客户端自身标识信息，不同的浏览器有不同的标识，服务器依靠User-Agent判断客户端类型是IE还是Chrome，是Firefox还是一个Python爬虫；
+  - Accept：表示客户端能处理的HTTP响应格式，`*/*`表示任意格式，`text/*`表示任意文本，`image/png`表示PNG格式的图片；
+  - Accept-Language：表示客户端接收的语言，多种语言按优先级排序，服务器依靠该字段给用户返回特定语言的网页版本。
+
+### GET请求
+
+- 只有HTTP Header，没有HTTP Body
+- `GET`请求的参数必须附加在URL上，并以URLEncode方式编码，因为URL的长度限制，`GET`请求的参数不能太多
+
+### POST请求
+
+- 既有HTTP Header，也有HTTP Body
+- `POST`请求的参数必须放到Body中，`POST`请求的参数不一定是URL编码，可以按任意格式编码，只需要在`Content-Type`中正确设置即可。
+
