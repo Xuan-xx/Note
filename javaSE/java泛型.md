@@ -21,18 +21,63 @@
 2. 在给泛型指定具体类型后，可以传入这种类型的数据或这种类型的子类的数据
 3. 泛型的默认类型是Object
 
+---
 
 
-## 编写泛型
+
+## 编写泛型类
+
+- 普通成员可以使用泛型
+- 使用泛型的数组，不能初始化
+- 泛型类的类型，是在创建对象时确定的（因为创建对象时，需要指定确定类型）
 
 ### 泛型的静态方法
 
-- 编写泛型的静态方法时不能使用跟泛型相同的<T>
+- 编写泛型的静态方法时不能使用跟类的泛型相同的<T>
 - 应另外使用另一种泛型，例如<K>
+
+```java
+public class Pair<T> {
+    private T first;
+    private T last;
+    public Pair(T first, T last) {
+        this.first = first;
+        this.last = last;
+    }
+    public T getFirst() { ... }
+    public T getLast() { ... }
+
+    // 静态泛型方法应该使用其他类型区分:
+    public static <K> Pair<K> create(K first, K last) {
+        return new Pair<K>(first, last);
+    }
+}
+```
+
+
 
 ### 多个泛型类型
 
 - 可以使用<T,K>的方式定义多种类型
+
+
+
+## 编写泛型接口
+
+- 接口中静态成员不能使用泛型
+- 泛型接口的类型，在`继承接口`或者`实现接口`时确定
+- 没有指定类型，默认类型为Object
+
+
+
+## 编写泛型方法
+
+- 可以定义在普通类中，也可以定义在泛型类中
+- 修饰符 <T,R...> 返回类型 方法名(参数列表){}    当调用方法传入参数时，编译器便会确定类型
+- 当泛型方法被调用时，类型会确定
+- 如果修饰符后没有<T,R..>，参数列表中有 E ，不是泛型方法，而是使用了泛型
+
+---
 
 
 
@@ -48,6 +93,8 @@
    - 所有泛型实例，无论`T`的类型是什么，`getClass()`返回同一个`Class`实例，因为编译后它们全部都是`AClass<Object>`。
 3. 无法判断带泛型的类型
 4. 不能实例化T类型
+
+---
 
 
 
@@ -75,6 +122,8 @@ public class Pair<T> {
 }
 ```
 
+---
+
 
 
 ## 泛型继承
@@ -94,11 +143,36 @@ IntPair ip = new IntPair(1, 2);
 
 
 
+泛型不具备继承性：
+
+```java
+List<Object> list = new ArrayList<String>();//错误
+```
+
+
+
+---
+
+
+
+
+
 ## 通配符
 
-### extends通配符
 
-- <? extends Object>
+
+### 无限定通配符
+
+- <?>    代表任意泛型都可以接收
+- 不能读不能写
+- 可以引入参数<T>消除<?>
+- 是所有<T>的超类
+
+
+
+### extends通配符（表示上限）
+
+- <? extends Object>    可以接收Object的子类
 - 可以读不可以写（传入null除外）
 
 #### 使用extends限定T类型
@@ -130,23 +204,18 @@ Pair<Object> p2 = null; // compile error!
 
 
 
-## super通配符
+### super通配符（表示下限）
 
+- <? super AA>     支持AA类以及AA类的父类，不限于直接父类
 - 可以写不可以读（获取Object除外）
 
 
 
-## PECS原则
+### PECS原则
 
 何时使用`extends`，何时使用`super`？
 
 Producer Extends Consumer Super
 
+---
 
-
-## 无限定通配符
-
-- <?>
-- 不能读不能写
-- 可以引入参数<T>消除<?>
-- 是所有<T>的超类
