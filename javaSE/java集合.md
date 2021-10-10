@@ -11,13 +11,13 @@
 
 **Collection**(单列集合)
 
-![](/home/xx/Documents/studyMd/IMG/Collection.jpg)
+![](java集合/Collection.jpg)
 
 **Map**（双列集合）
 
-![](/home/xx/Documents/studyMd/IMG/Map.jpg)
+![](java集合/Map.jpg)
 
-![](/home/xx/Documents/studyMd/IMG/Collection_framework.png)
+![](java集合/Collection_framework.png)
 
 ---
 
@@ -517,7 +517,7 @@ int newCapacity = oldCapacity+((capacityIncrement > 0)?capacityIncrement:oldCapa
 
 
 
-![](/home/xx/Documents/studyMd/IMG/集合类的选择.jpg)
+![](java集合/集合类的选择.jpg)
 
 ---
 

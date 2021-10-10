@@ -23,7 +23,7 @@
 
 ## 体系
 
-![](/home/xx/Documents/studyMd/IMG/异常结构体系.png)
+![](java异常/异常结构体系.png)
 
 
 

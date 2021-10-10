@@ -116,7 +116,7 @@
 
 - New    Runnable(Ready and Running)    TimedWaiting(超时等待)    Waiting    Blocked     Teminated(结束)
 
-<img src="/home/xx/Documents/studyMd/IMG/线程状态图.jpeg" style="zoom:80%;" />
+![](java多线程/线程状态图.jpeg)
 
 
 

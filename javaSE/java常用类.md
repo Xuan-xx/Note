@@ -82,7 +82,7 @@
 
 ### 常用方法
 
-![](/home/xx/Documents/studyMd/IMG/Wrapper_method.jpg)
+![](java常用类/Wrapper_method.jpg)
 
 ---
 
@@ -111,15 +111,15 @@ String s1 = "hello"+"java";
 
 ### 常用方法
 
-![](/home/xx/Documents/studyMd/IMG/String_methond1.jpg)
+![](java常用类/String_methond1.jpg)
 
-![](/home/xx/Documents/studyMd/IMG/String_subString.jpg)
+![](java常用类/String_subString.jpg)
 
 - substring()中，截取的字符串包括beginIndex，不包括endIndex
 
 
 
-![](/home/xx/Documents/studyMd/IMG/String_methond2.jpg)
+![](java常用类/String_methond2.jpg)
 
 - concat()用于连接字符串
 
@@ -188,7 +188,7 @@ StringBuffer -> String
 
 ## Math
 
-![](/home/xx/Documents/studyMd/IMG/Math_method.jpg)
+![](java常用类/Math_method.jpg)
 
 ---
 
