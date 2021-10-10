@@ -368,6 +368,8 @@ int newCapacity = oldCapacity+((capacityIncrement > 0)?capacityIncrement:oldCapa
 
 ### 1.HashMap类
 
+- 继承自AbstractMap类
+
 - HashMap是线程不安全的
 - 索引index = (table.length-1) & hashCode
 - table表内数据存储的类型是HashMap$Node
@@ -429,6 +431,8 @@ int newCapacity = oldCapacity+((capacityIncrement > 0)?capacityIncrement:oldCapa
 
 
 ### 2.Hashtable类
+
+- 继承自Dictionary类
 
 - 存放的元素是K-V
 - 存放的键和值都不能是null
