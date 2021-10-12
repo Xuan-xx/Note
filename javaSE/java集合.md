@@ -56,9 +56,10 @@
 
 3. subList(int fromIndex,int toIndex)    返回从fromIndex到toIndex位置的子集合
 
-   
 
-   ### 1.ArrayList类
+
+
+### 1.ArrayList类
 
 - add()可以加入null
 - 底层是由数组实现数据存储
