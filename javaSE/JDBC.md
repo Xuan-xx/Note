@@ -171,3 +171,93 @@ example:
 3. Druid（德鲁伊）
 4. BoneCP
 5. HikariCP
+
+
+
+## C3P0基本使用
+
+1. 定义配置文件(c3p0-config.xml)
+2. 根据`<named-config name="xx">`中的name值获取``ComboPooledDataSource对象``(该对象简介实现了DataSource接口)
+3. 使用``ComboPooledDataSource对象``的`getConnection()`获取连接
+4. 关闭连接
+
+
+
+## Druid基本使用
+
+1. 定义配置文件(Druid.properties)
+
+2. 根据传入的Properties对象调用
+
+   `DruidDataSourceFactory.createDataSource(properties)`获取`DataSource`
+
+3. 使用`getConnection()`获取连接
+
+4. 关闭连接
+
+
+
+# Apache-DBUtils
+
+- ResultSet存在的问题
+
+![image-20211027132804567](JDBC/image-20211027132804567.png)
+
+
+
+![image-20211027155538084](JDBC/image-20211027155538084.png)
+
+
+
+## 简单使用
+
+1. 获取连接Connection
+
+2. 执行queryRunner.query(conn,sql,BeanListHandler<>(Class),param...)
+
+   ```java
+   @org.junit.jupiter.api.Test
+       public void test(){
+           Connection connect = null;
+           List<Student> list = null;
+           try {
+               connect = JDBCUtilsByDruid.getConnect();
+   
+               QueryRunner queryRunner = new QueryRunner();
+               String sql = "select * from student where sno >= ?;";
+   
+               //执行resultSet 封装到 ArrayList中
+                list = queryRunner.query(connect, sql, new BeanListHandler<>(Student.class), 200);
+           } catch (SQLException e) {
+               throw new RuntimeException(e);
+           }finally {
+               JDBCUtilsByDruid.close(null,null,connect);
+               System.out.println("close!");
+           }
+   
+           for (Student s :
+                   list) {
+               System.out.println(s);
+           }
+       }
+   ```
+
+   
+
+
+
+# DAO(Data Access Object)
+
+## 为什么需要DAO
+
+1. SQL语句是固定的，不能通过参数传入，通用性不好，需要进行改进，更好的进行CRUD
+2. 对于select操作，返回类型不能确定，需要使用泛型
+3. 将来的表很多，业务需求复杂，不可能只是一个Java类完成
+
+
+
+## BasicDAO
+
+- DAO的通用方法，专门和数据库进行交互，完成CRUD操作
+
+![image-20211027204435430](JDBC/image-20211027204435430.png)

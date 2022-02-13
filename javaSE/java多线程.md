@@ -175,3 +175,28 @@ public synchronized void m(String name){
      >避免使用suspend()和resume()来控制线程，方法不再推荐使用
 
  
+
+# volatile(易变的)
+
+- 用该关键字声明的变量的读取和写入一定会同步到主内存里，而不是直接从Cache里读取
+
+
+
+## 作用
+
+- 当程序的数据在不同的线程或者CPU核心里面更新时，不同的线程或CPU核心有自己各自的缓存，很可能在A线程的更新，B线程无法看到。这时就需要使用volatile关键字。
+
+
+
+# 线程池
+
+- 使用`ExecutorService`表示线程池
+
+
+
+**实现类**（创建这些线程池的方法被封装到`Executors`类中）：
+
+- `FixedThreadPool`：线程数量固定的线程池
+- `CachedThreadPool`：线程数根据任务动态调整的线程池
+- `SingleThreadExecutor`：根据单线程执行的线程池
+- `ScheduledThreadPool`：多用于需要反复执行的任务

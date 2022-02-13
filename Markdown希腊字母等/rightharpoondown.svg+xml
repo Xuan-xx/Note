@@ -1,0 +1,9 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="2.324ex" height="1.176ex" style="vertical-align: -0.338ex;" viewBox="0 -360.8 1000.5 506.3" role="img" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-labelledby="MathJax-SVG-1-Title">
+<title id="MathJax-SVG-1-Title">\rightharpoondown</title>
+<defs aria-hidden="true">
+<path stroke-width="1" id="E1-MJMAIN-21C1" d="M56 237T56 250T70 270H937Q944 263 944 256Q944 251 944 250T943 246T940 242T933 238Q794 153 734 7Q729 -7 726 -9T711 -11Q695 -11 693 -5Q690 -1 696 16Q721 84 763 139T852 230H70Q56 237 56 250Z"></path>
+</defs>
+<g stroke="currentColor" fill="currentColor" stroke-width="0" transform="matrix(1 0 0 -1 0 0)" aria-hidden="true">
+ <use xlink:href="#E1-MJMAIN-21C1" x="0" y="0"></use>
+</g>
+</svg>
